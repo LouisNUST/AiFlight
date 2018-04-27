@@ -1,14 +1,14 @@
 #Author: John Marrs
 class ClientMessage:
-	radioMessage = ''
-	turn = 0
-	accelerate = False
-	decelerate = False
-	shoot_gun = False
-	shoot_missile = False
 	
 	def __init__(self, identity):
 		self.id = identity
+		self.accelerate = False
+		self.decelerate = False
+		self.shoot_gun = False
+		self.shoot_missile = False
+		self.turn = 0
+		self.radio_message = ''
 
 	def add_turn(self, rate):
 		self.turn = rate

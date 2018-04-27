@@ -1,12 +1,13 @@
 #Author: John Marrs
 import pickle
 import math
+import time
 class GameData:
 	#Define variables for game
 
 	#Size from origin until edge of map
-	x_size = 20000
-	y_size = 20000
+	x_size = 10000
+	y_size = 10000
 
 	def __init__(self):
 		self.players = []
@@ -21,7 +22,7 @@ class Player:
 	health = float(100)
 	#0 degrees points directly to the right, and Counterclockwise is positive
 	angle = float(0)
-	speed = float(100)
+	speed = float(500)
 	max_speed = float(500)
 	min_speed = float(100)
 	max_turn_speed = float(45)
@@ -53,22 +54,18 @@ class Player:
 
 
 class Missile:
-	owner = None
-	lock = None
-	x = float(0)
-	y = float(0)
-	angle = float(0)
 	speed = float(600)
-	damge = float(60)
-	lifespan = float(3)
+	damage = float(60)
+	lifespan = float(6)
 	max_turn_speed = float(10)
 
 	def __init__(self, owner, x, y, angle, lock):
 		self.owner = owner
-		self.x = x
-		self.y = y
-		self.angle = angle
+		self.x = float(x)
+		self.y = float(y)
+		self.angle = float(angle)
 		self.lock = lock
+		self.age = 0
 
 	def turn(self, deg, dt):
 		#deg = degrees per second
@@ -88,19 +85,22 @@ class Bullet:
 	x = float(0)
 	y = float(0)
 	angle = float(0)
-	speed = float(900)
+	speed = float(1000)
 	lifespan = float(3)
+	collision_radius = 1
 	possible_shot_offset = float(2) #Degrees to which the shot could be off from the owner's firing angle
 	def __init__(self, owner, x, y, angle):
 		self.owner = owner
 		self.x = float(x)
 		self.y = float(y)
 		self.angle = float(angle)
+		self.age = 0
 
 	def move(self, dt):
 		#dt is the change in time and it is in seconds
 		self.x = self.x + math.cos(math.radians(self.angle)) * self.speed*dt
 		self.y = self.y + math.sin(math.radians(self.angle)) * self.speed*dt
+		self.age = self.age + 1
 
 class Lock:
 	owner = None

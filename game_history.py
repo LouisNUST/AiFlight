@@ -2,6 +2,10 @@
 import pickle
 import game_data
 import os
+import cv2
+import numpy as np
+import time
+import math
 class GameHistory:
 	gamehistory = []
 	chunk_size = 900
@@ -39,5 +43,109 @@ class GameHistory:
 			return True
 		else:
 			return False
+
+	def playback_from(self, gamename, center_player, width, height):
+		chunk = 0
+
+		f_name = 'GameHistory/' + str(gamename) + '/chunk' + str(chunk) + '.ck'
+
+
+		t_last = time.time()
+		framerate = 100
+		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output.avi', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
+		t_start = time.time()
+		while os.path.exists(f_name):
+			self.load_from_file(f_name)
+			print('Writing chunk: ' +str(chunk))
+
+			for i in range(0, len(self.gamehistory)):
+
+			
+				img = np.zeros((width, height, 3), np.uint8)
+				for player in self.gamehistory[i].players:
+					x = player.x - self.gamehistory[i].players[center_player].x + width/2.0
+					y = player.y - self.gamehistory[i].players[center_player].y + height/2.0
+					#print(player.y)
+					x = int(round(x))
+					y = int(round(y))
+					cv2.circle(img, (x, y), int(player.collision_radius),(0, 0, 255), 2 )
+					cv2.line(img, (x, y), (x + int(player.collision_radius * math.cos(math.radians(player.angle))), y + int(player.collision_radius * math.sin(math.radians(player.angle)))), (0, 0, 255), 2)
+
+				
+
+				for bullet in self.gamehistory[i].bullets:
+					x = bullet.x - self.gamehistory[i].players[center_player].x + width/2.0
+					y = bullet.y - self.gamehistory[i].players[center_player].y + height/2.0
+					#print(player.y)
+					x = int(round(x))
+					y = int(round(y))
+					
+					cv2.line(img, (x, y), (x + int(bullet.collision_radius * 5 * math.cos(math.radians(bullet.angle))), y + int(bullet.collision_radius * 5 * math.sin(math.radians(bullet.angle)))), (0, 0, 255), 2)
+
+
+				v.write(img)
+
+
+					
+
+			chunk = chunk + 1
+			f_name = 'GameHistory/' + str(gamename) + '/chunk' + str(chunk) + '.ck'
+
+		v.release()
+		t_end = time.time()
+		print('Time elapsed: ' + str(t_end-t_start))
+
+		# MAP OVERVIEW PLAYBACK
+
+	def playback_overview(self, gamename, width, height):
+		chunk = 0
+
+		f_name = 'GameHistory/' + str(gamename) + '/chunk' + str(chunk) + '.ck'
+
+
+		t_last = time.time()
+		framerate = 100
+		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output.avi', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
+		t_start = time.time()
+		while os.path.exists(f_name):
+			self.load_from_file(f_name)
+			print('Writing chunk: ' +str(chunk))
+
+			for i in range(0, len(self.gamehistory)):
+
+			
+				img = np.zeros((width, height, 3), np.uint8)
+				for player in self.gamehistory[i].players:
+					x = (player.x + 10000)/20000 * width
+					y = (player.y + 10000)/20000 * height
+					#print(player.y)
+					x = int(round(x))
+					y = int(round(y))
+					cv2.circle(img, (x, y), int(player.collision_radius),(0, 0, 255), 2 )
+					cv2.line(img, (x, y), (x + int(player.collision_radius * math.cos(math.radians(player.angle))), y + int(player.collision_radius * math.sin(math.radians(player.angle)))), (0, 0, 255), 2)
+
+				
+
+				for bullet in self.gamehistory[i].bullets:
+					x = (bullet.x + 10000)/20000 * width
+					y = (bullet.y + 10000)/20000 * height
+					#print(player.y)
+					x = int(round(x))
+					y = int(round(y))
+					
+					cv2.line(img, (x, y), (x + int(bullet.collision_radius * 5 * math.cos(math.radians(bullet.angle))), y + int(bullet.collision_radius * 5 * math.sin(math.radians(bullet.angle)))), (0, 0, 255), 2)
+
+
+				v.write(img)
+
+
+					
+
+			chunk = chunk + 1
+			f_name = 'GameHistory/' + str(gamename) + '/chunk' + str(chunk) + '.ck'
+
+		v.release()
+		t_end = time.time()
+		print('Time elapsed: ' + str(t_end-t_start))
 		
 

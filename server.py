@@ -9,6 +9,7 @@ import client_message
 import server_message
 import init_message
 import copy
+import random
 class Server:
 	connections = []
 	gamedata = None
@@ -46,7 +47,7 @@ class Server:
 			self.connections.append(conn)
 			print('Client ' + str(len(self.connections)-1) + ' Connected at: ' + str(addr[0]) + ':' + str(addr[1]))
 
-			self.gamedata.players.append(game_data.Player(c,0,0,0))
+			self.gamedata.players.append(game_data.Player(c,random.randint(-8000, 8000), random.randint(-8000, 8000), random.randint(0,360)))
 
 			print('\tExchanging init information...')
 
@@ -93,6 +94,12 @@ class Server:
 			temp_message = server_message.ServerMessage()
 			#CUSSTOMIZE WHAT TO SEND TO CLIENTS
 
+			temp_message.add_location(self.gamedata.players[self.connections.index(c)].x, self.gamedata.players[self.connections.index(c)].y)
+			for c2 in self.connections:
+				if c != c2:
+					temp_message.add_enemy(str(self.connections.index(c)) , self.gamedata.players[self.connections.index(c2)].x, self.gamedata.players[self.connections.index(c2)].y)
+
+
 
 			temp_message = socket_utilities.convert_to_bytes(temp_message)
 			socket_utilities.send_data(c, temp_message)
@@ -121,7 +128,8 @@ class Server:
 			if i.decelerate:
 				self.gamedata.players[i.id].decelerate( self.dt)
 			if i.shoot_gun:
-				self.gamedata.bullets.append(game_data.Bullet(i.id, self.gamedata.players[i.id].x, self.gamedata.players[i.id].y), self.gamedata.players[i.id].angle)
+				self.gamedata.bullets.append(game_data.Bullet(i.id, self.gamedata.players[i.id].x, self.gamedata.players[i.id].y, self.gamedata.players[i.id].angle))
+				self.gamedata.players[i.id].bullets = self.gamedata.players[i.id].bullets - 1
 			if i.shoot_missile:
 				pass
 
@@ -129,13 +137,23 @@ class Server:
 			#self.gamedata.players[i.id].move(self.dt)
 		for p in self.gamedata.players:
 			p.move(self.dt)
-			print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
+			#print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
 
 		for b in self.gamedata.bullets:
-			b.move()
+			b.move(self.dt)
+			if b.age > b.lifespan * self.iterations_per_second:
+				self.gamedata.bullets.remove(b)
+				del b
+
+		for m in self.gamedata.missiles:
+			m.move(self.dt)
+			if m.age > m.lifespan * self.iterations_per_second:
+				self.gamedata.missiles.remove(m)
+				del m
 
 
-		print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
+
+		#print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
 		# THIS FUNCTION DEFINES GAME RULES/ITERATIONS #UPDATES POSITIONS>>> ETC
 
 #---------------------------------------------------------------------------------------------------------------------------- END GAME LOGIC
@@ -163,6 +181,9 @@ def main():
 
 	#ts = TestServer('localhost',5555,2,10)
 	ts = Server(hostname, int(p), int(num_c), int(num_i), str(game_name))
+	print("Rendering...")
+	ts.gamehistory.playback_overview(ts.gamehistory.file_stem, 600, 600)
+	print('Finished Rendering')
 
 if __name__ == '__main__':
 	main()

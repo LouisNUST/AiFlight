@@ -5,12 +5,15 @@ import pickle
 import client_message
 import server_message
 import init_message
+import time
+import math
 class Client:
 	def __init__(self,hostname, port):
 		self.hostname = hostname
 		self.port = port
 		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.id = -1
+		self.t = time.time()
 
 		
 
@@ -39,7 +42,12 @@ class Client:
 					return
 				elif data == b'START':
 					print("Simulation running...")
-				self.send_response()
+					self.send_response(None)
+
+				else:
+					server_message = socket_utilities.convert_to_object(data)
+					self.send_response(server_message)
+
 		except socket.error as e:
 			print(e)
 
@@ -60,10 +68,17 @@ class Client:
 
 		return data;
 
-	def send_response(self):
+	def send_response(self, serv_mess):
 		#print('Sending response...')
+
 		resp = client_message.ClientMessage(self.id)
-		resp.add_turn(45)
+
+		if serv_mess != None:
+			if serv_mess.x > 9000:
+				resp.add_turn(30)
+		#resp.add_turn(1)
+
+
 		resp = socket_utilities.convert_to_bytes(resp)
 		socket_utilities.send_data(self.sock, resp)
 		#self.sock.send('a'.encode())
