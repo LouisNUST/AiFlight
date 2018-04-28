@@ -47,7 +47,7 @@ class Server:
 			self.connections.append(conn)
 			print('Client ' + str(len(self.connections)-1) + ' Connected at: ' + str(addr[0]) + ':' + str(addr[1]))
 
-			self.gamedata.players.append(game_data.Player(c,random.randint(-8000, 8000), random.randint(-8000, 8000), random.randint(0,360)))
+			self.gamedata.players.append(game_data.Player(c,float(random.randint(-8000, 8000)), float(random.randint(-8000, 8000)), float(random.randint(0,360))))
 
 			print('\tExchanging init information...')
 
@@ -93,11 +93,15 @@ class Server:
 		for c in self.connections:
 			temp_message = server_message.ServerMessage()
 			#CUSSTOMIZE WHAT TO SEND TO CLIENTS
-
+			p = self.gamedata.players[self.connections.index(c)]
+			if p.fire_iteration_count == 0:
+				temp_message.add_can_shoot()
 			temp_message.add_location(self.gamedata.players[self.connections.index(c)].x, self.gamedata.players[self.connections.index(c)].y)
+			temp_message.add_angle(self.gamedata.players[self.connections.index(c)].angle)
 			for c2 in self.connections:
 				if c != c2:
-					temp_message.add_enemy(str(self.connections.index(c)) , self.gamedata.players[self.connections.index(c2)].x, self.gamedata.players[self.connections.index(c2)].y)
+					temp_message.add_enemy(str(self.connections.index(c2)) , self.gamedata.players[self.connections.index(c2)].x, self.gamedata.players[self.connections.index(c2)].y)
+
 
 
 
@@ -128,8 +132,12 @@ class Server:
 			if i.decelerate:
 				self.gamedata.players[i.id].decelerate( self.dt)
 			if i.shoot_gun:
-				self.gamedata.bullets.append(game_data.Bullet(i.id, self.gamedata.players[i.id].x, self.gamedata.players[i.id].y, self.gamedata.players[i.id].angle))
-				self.gamedata.players[i.id].bullets = self.gamedata.players[i.id].bullets - 1
+				p = self.gamedata.players[i.id]
+				if p.bullet_ammo > 0 & p.fire_iteration_count == 0:
+					self.gamedata.bullets.append(game_data.Bullet(i.id, p.x, p.y, p.angle))
+					p.bullet_ammo = p.bullet_ammo - 1
+					p.fire_iteration_count = 1
+				del p
 			if i.shoot_missile:
 				pass
 
@@ -137,6 +145,10 @@ class Server:
 			#self.gamedata.players[i.id].move(self.dt)
 		for p in self.gamedata.players:
 			p.move(self.dt)
+			if p.fire_iteration_count >= p.fire_rate * (p.fire_rate/self.iterations_per_second)+1:
+				p.fire_iteration_count = 0
+			elif p.fire_iteration_count > 0:
+				p.fire_iteration_count = p.fire_iteration_count + 1
 			#print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
 
 		for b in self.gamedata.bullets:
@@ -145,11 +157,21 @@ class Server:
 				self.gamedata.bullets.remove(b)
 				del b
 
+			for p in self.gamedata.players:
+				if self.gamedata.check_hit(p,b):
+					p.health = p.health - b.damage
+
 		for m in self.gamedata.missiles:
 			m.move(self.dt)
 			if m.age > m.lifespan * self.iterations_per_second:
 				self.gamedata.missiles.remove(m)
 				del m
+
+		for p in self.gamedata.players:
+			if p.health <= 0:
+				self.gamedata.players.remove(p)
+				del p
+
 
 
 
@@ -183,7 +205,7 @@ def main():
 	ts = Server(hostname, int(p), int(num_c), int(num_i), str(game_name))
 	print("Rendering...")
 	ts.gamehistory.playback_overview(ts.gamehistory.file_stem, 600, 600)
-	print('Finished Rendering')
+	ts.gamehistory.playback_from(ts.gamehistory.file_stem, 0, 600, 600)
 
 if __name__ == '__main__':
 	main()

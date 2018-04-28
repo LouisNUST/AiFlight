@@ -17,23 +17,25 @@ class GameData:
 
 	#Define methods for working with game variables
 class Player:
-	acceleration = float(10)
-	identity = -1
-	health = float(100)
-	#0 degrees points directly to the right, and Counterclockwise is positive
-	angle = float(0)
-	speed = float(500)
-	max_speed = float(500)
-	min_speed = float(100)
-	max_turn_speed = float(45)
-	collision_radius = float(8)
-	missiles = 8
-	bullet_ammo = 300
-	bullet_relaod_time = float(2)
-	locks_on_enemy = []
-	enemy_locks_on_player = []
+
 
 	def __init__(self, identity, x, y, angle):
+		self.acceleration = 10.0
+		self.health = 100.0
+		self.speed = 250.0
+		self.max_speed = 500.0
+		self.min_speed = 100.0
+		self.max_turn_speed = 45.0
+		self.collision_radius = 8.0
+		self.missiles = 8
+		self.bullet_ammo = 300
+		self.magazine_size = 300
+		self.fire_iteration_count = 0
+		self.fire_rate = 20.0 # SHOTS PER SECOND
+		self.reloat_iteration_count = 0
+		self.bullet_reload_time = 2.0 #Seconds to reload
+		self.locks_on_enemy = []
+		self.locks_on_player = []
 		self.identity = identity
 		self.x = float(x)
 		self.y = float(y)
@@ -42,15 +44,20 @@ class Player:
 	def turn(self, deg, dt):
 		#deg = degrees per second
 		if abs(deg) > self.max_turn_speed:
-			deg = self.max_turn_speed
+			deg = deg/abs(deg) * self.max_turn_speed
 		self.angle = self.angle + deg * dt
 		if self.angle >= 360:
 			self.angle = self.angle - 360 
+
 
 	def move(self, dt):
 		#dt is the change in time and it is in seconds
 		self.x = self.x + math.cos(math.radians(self.angle)) * self.speed*dt
 		self.y = self.y + math.sin(math.radians(self.angle)) * self.speed*dt
+
+	def reload(self, dt):
+		self.bullet_ammo = self.magazine_size
+		self.reloat_iteration_count = 0
 
 
 class Missile:
@@ -87,7 +94,6 @@ class Bullet:
 	angle = float(0)
 	speed = float(1000)
 	lifespan = float(3)
-	collision_radius = 1
 	possible_shot_offset = float(2) #Degrees to which the shot could be off from the owner's firing angle
 	def __init__(self, owner, x, y, angle):
 		self.owner = owner
@@ -95,6 +101,7 @@ class Bullet:
 		self.y = float(y)
 		self.angle = float(angle)
 		self.age = 0
+		self.damage = 1
 
 	def move(self, dt):
 		#dt is the change in time and it is in seconds

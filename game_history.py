@@ -52,7 +52,7 @@ class GameHistory:
 
 		t_last = time.time()
 		framerate = 100
-		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output.avi', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
+		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output' + str(center_player) + '.avi', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
 		t_start = time.time()
 		while os.path.exists(f_name):
 			self.load_from_file(f_name)
@@ -93,6 +93,7 @@ class GameHistory:
 
 		v.release()
 		t_end = time.time()
+		print('Finished Rendering')
 		print('Time elapsed: ' + str(t_end-t_start))
 
 		# MAP OVERVIEW PLAYBACK
@@ -146,6 +147,7 @@ class GameHistory:
 
 		v.release()
 		t_end = time.time()
+		print('Finished Rendering')
 		print('Time elapsed: ' + str(t_end-t_start))
 		
 

@@ -7,6 +7,7 @@ import server_message
 import init_message
 import time
 import math
+import game_data
 class Client:
 	def __init__(self,hostname, port):
 		self.hostname = hostname
@@ -74,8 +75,48 @@ class Client:
 		resp = client_message.ClientMessage(self.id)
 
 		if serv_mess != None:
-			if serv_mess.x > 9000:
-				resp.add_turn(30)
+			if len(serv_mess.enemies_in_sight) > 0:
+				xenem = serv_mess.enemies_in_sight[0].x
+				yenem = serv_mess.enemies_in_sight[0].y
+
+				a = serv_mess.angle
+
+				x_next = serv_mess.x + math.cos(math.radians(a)) * 100.0
+				y_next = serv_mess.y + math.sin(math.radians(a)) * 100.0
+				dist = game_data.calculate_distance_points(xenem, yenem, x_next, y_next)
+
+
+
+				x_pos = serv_mess.x + math.cos(math.radians(a + 45.0/100.0)) * 100
+				y_pos = serv_mess.y + math.sin(math.radians(a + 45.0/100.0)) * 100
+				dist_pos = game_data.calculate_distance_points(xenem, yenem, x_pos, y_pos)
+
+				x_neg = serv_mess.x + math.cos(math.radians(a - 45.0/100.0)) * 100
+				y_neg = serv_mess.y + math.sin(math.radians(a - 45.0/100.0)) * 100
+				dist_neg = game_data.calculate_distance_points(xenem, yenem, x_neg, y_neg)
+
+
+
+				#print('MyLoc -> x: ' + str(serv_mess.x) + ' y: ' + str(serv_mess.y))
+				#print('Next -> x: ' + str(x_next) + ' y: ' + str(y_next) + ' dist: ' + str(dist))
+				#print('Pos -> x: ' + str(x_pos) + ' y: ' + str(y_pos) + ' dist: ' + str(dist_pos))
+				#print('Neg -> x: ' + str(x_neg) + ' y: ' + str(y_neg) + ' dist: ' + str(dist_neg))
+
+
+				if dist_pos < dist:
+					resp.add_turn(45)
+				elif dist_neg < dist:
+					resp.add_turn(-45)
+
+				d2 = game_data.distance_between_point_and_line(serv_mess.x, serv_mess.y, x_next, y_next, xenem, yenem)
+				if (serv_mess.can_shoot) & (dist < 1200) & (d2 < 10):
+					resp.add_shoot()
+				
+
+
+
+			#if serv_mess.x > 9000 or serv_mess.y > 9000 or serv_mess.x < -9000 or serv_mess.y < -9000:
+			#	resp.add_turn(45)
 		#resp.add_turn(1)
 
 
