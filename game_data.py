@@ -17,29 +17,29 @@ class GameData:
 
 	#Define methods for working with game variables
 class Player:
-
-
+	acceleration = 10.0
+	max_speed = 500.0
+	min_speed = 100.0
+	max_turn_speed = 45.0
+	collision_radius = 8.0
+	magazine_size = 300
+	fire_rate = 10.0
+	bullet_reload_time = 2.0
 	def __init__(self, identity, x, y, angle):
-		self.acceleration = 10.0
 		self.health = 100.0
 		self.speed = 250.0
-		self.max_speed = 500.0
-		self.min_speed = 100.0
-		self.max_turn_speed = 45.0
-		self.collision_radius = 8.0
 		self.missiles = 8
 		self.bullet_ammo = 300
 		self.magazine_size = 300
 		self.fire_iteration_count = 0
-		self.fire_rate = 20.0 # SHOTS PER SECOND
-		self.reloat_iteration_count = 0
-		self.bullet_reload_time = 2.0 #Seconds to reload
+		self.reload_iteration_count = 0
 		self.locks_on_enemy = []
 		self.locks_on_player = []
 		self.identity = identity
 		self.x = float(x)
 		self.y = float(y)
 		self.angle = float(angle)
+		self.alive = True
 
 	def turn(self, deg, dt):
 		#deg = degrees per second
@@ -61,10 +61,10 @@ class Player:
 
 
 class Missile:
-	speed = float(600)
-	damage = float(60)
-	lifespan = float(6)
-	max_turn_speed = float(10)
+	damage = 60.0
+	speed = 900.0
+	lifespan = 6.0
+	max_turn_speed = 10.0
 
 	def __init__(self, owner, x, y, angle, lock):
 		self.owner = owner
@@ -117,8 +117,8 @@ class Lock:
 		self.target = target
 
 
-def check_hit(missle_or_bullet, player):
-	if calculate_distance_entities(missle_or_bullet,player) < player.collision_radius:
+def check_hit(missile_or_bullet, player):
+	if (calculate_distance_entities(missile_or_bullet,player) < player.collision_radius) & (missile_or_bullet.owner != player.identity):
 		return True
 	else:
 		return False

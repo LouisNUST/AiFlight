@@ -94,13 +94,14 @@ class Server:
 			temp_message = server_message.ServerMessage()
 			#CUSSTOMIZE WHAT TO SEND TO CLIENTS
 			p = self.gamedata.players[self.connections.index(c)]
-			if p.fire_iteration_count == 0:
-				temp_message.add_can_shoot()
-			temp_message.add_location(self.gamedata.players[self.connections.index(c)].x, self.gamedata.players[self.connections.index(c)].y)
-			temp_message.add_angle(self.gamedata.players[self.connections.index(c)].angle)
-			for c2 in self.connections:
-				if c != c2:
-					temp_message.add_enemy(str(self.connections.index(c2)) , self.gamedata.players[self.connections.index(c2)].x, self.gamedata.players[self.connections.index(c2)].y)
+			if p.alive:
+				if p.fire_iteration_count == 0:
+					temp_message.add_can_shoot()
+				temp_message.add_location(self.gamedata.players[self.connections.index(c)].x, self.gamedata.players[self.connections.index(c)].y)
+				temp_message.add_angle(self.gamedata.players[self.connections.index(c)].angle)
+				for c2 in self.connections:
+					if c != c2:
+						temp_message.add_enemy(str(self.connections.index(c2)) , self.gamedata.players[self.connections.index(c2)].x, self.gamedata.players[self.connections.index(c2)].y)
 
 
 
@@ -144,11 +145,12 @@ class Server:
 
 			#self.gamedata.players[i.id].move(self.dt)
 		for p in self.gamedata.players:
-			p.move(self.dt)
-			if p.fire_iteration_count >= p.fire_rate * (p.fire_rate/self.iterations_per_second)+1:
-				p.fire_iteration_count = 0
-			elif p.fire_iteration_count > 0:
-				p.fire_iteration_count = p.fire_iteration_count + 1
+			if p.alive:
+				p.move(self.dt)
+				if p.fire_iteration_count >= self.iterations_per_second/p.fire_rate + 1:
+					p.fire_iteration_count = 0
+				elif p.fire_iteration_count > 0:
+					p.fire_iteration_count = p.fire_iteration_count + 1
 			#print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
 
 		for b in self.gamedata.bullets:
@@ -157,9 +159,9 @@ class Server:
 				self.gamedata.bullets.remove(b)
 				del b
 
-			for p in self.gamedata.players:
-				if self.gamedata.check_hit(p,b):
-					p.health = p.health - b.damage
+			#for p in self.gamedata.players:
+				#if self.gamedata.check_hit(p,b):
+					#p.health = p.health - b.damage
 
 		for m in self.gamedata.missiles:
 			m.move(self.dt)
@@ -168,9 +170,19 @@ class Server:
 				del m
 
 		for p in self.gamedata.players:
-			if p.health <= 0:
-				self.gamedata.players.remove(p)
-				del p
+			if p.alive:
+				for b in self.gamedata.bullets:
+					if game_data.check_hit(b,p):
+						p.health = p.health - b.damage
+
+				for m in self.gamedata.missiles:
+					if game_data.check_hit(m,p):
+						p.health = p.health - m.damage
+
+		for p in self.gamedata.players:
+			if p.alive:
+				if p.health <= 0:
+					p.alive = False
 
 
 
@@ -204,8 +216,8 @@ def main():
 	#ts = TestServer('localhost',5555,2,10)
 	ts = Server(hostname, int(p), int(num_c), int(num_i), str(game_name))
 	print("Rendering...")
-	ts.gamehistory.playback_overview(ts.gamehistory.file_stem, 600, 600)
-	ts.gamehistory.playback_from(ts.gamehistory.file_stem, 0, 600, 600)
+	ts.gamehistory.playback_overview(ts.gamehistory.file_stem, 1024, 1024, 25, ts.iterations_per_second)
+	#ts.gamehistory.playback_from(ts.gamehistory.file_stem, 0, 600, 600)
 
 if __name__ == '__main__':
 	main()
