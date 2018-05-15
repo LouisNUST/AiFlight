@@ -52,7 +52,7 @@ class GameHistory:
 
 
 		t_last = time.time()
-		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output' + str(center_player) + '.avi', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
+		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output' + str(center_player) + '.mp4', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
 		t_start = time.time()
 		while os.path.exists(f_name):
 			self.load_from_file(f_name)
@@ -82,8 +82,16 @@ class GameHistory:
 						x = int(round(x))
 						y = int(round(y))
 					
-						cv2.line(img, (x, y), (x + int(1 * 5 * math.cos(math.radians(bullet.angle))), y + int(1 * 5 * math.sin(math.radians(bullet.angle)))), (0, 0, 255), 2)
+						cv2.line(img, (x, y), (x + int(1 * 5 * math.cos(math.radians(bullet.angle))), y + int(1 * 2 * math.sin(math.radians(bullet.angle)))), (0, 0, 255), 2)
 
+					for missile in self.gamehistory[i].missiles:
+						x = missile.x - self.gamehistory[i].players[center_player].x + width/2.0
+						y = missile.y - self.gamehistory[i].players[center_player].y + height/2.0
+
+						x = int(round(x))
+						y = int(round(y))
+
+						cv2.line(img, (x, y), (x + int(1 * 5 * math.cos(math.radians(bullet.angle))), y + int(1 * 5 * math.sin(math.radians(missile.angle)))), (0, 255, 0), 2)
 
 					v.write(img)
 
@@ -107,7 +115,7 @@ class GameHistory:
 		background = cv2.imread('RenderResources/background_map.jpg', -1)
 
 		t_last = time.time()
-		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output.avi', cv2.VideoWriter_fourcc(*'MJPG'), framerate, (width, height))
+		v = cv2.VideoWriter('GameHistory/' + str(gamename) + '/output.mp4', 0x00000020, framerate, (width, height))
 		t_start = time.time()
 		while os.path.exists(f_name):
 			self.load_from_file(f_name)
@@ -118,7 +126,8 @@ class GameHistory:
 				if i % (ips/framerate) == 0:
 
 			
-					img = np.zeros((width, height, 3), np.uint8)
+					#img = np.zeros((width, height, 3), np.uint8)
+					img = copy.copy(background)
 					for player in self.gamehistory[i].players:
 						if player.alive:
 							x = (player.x + 10000)/20000 * width
@@ -138,7 +147,17 @@ class GameHistory:
 						x = int(round(x))
 						y = int(round(y))
 					
-						cv2.line(img, (x, y), (x + int(1 * 5 * math.cos(math.radians(bullet.angle))), y + int(1* 5 * math.sin(math.radians(bullet.angle)))), (0, 0, 255), 2)
+						cv2.line(img, (x, y), (x + int(1 * 5 * math.cos(math.radians(bullet.angle))), y + int(1* 2 * math.sin(math.radians(bullet.angle)))), (0, 0, 255), 2)
+
+					for missile in self.gamehistory[i].missiles:
+						#print('SHOULD HAVE RENDERED MISSILE')
+						x = (missile.x + 10000)/20000 * width
+						y = (missile.y + 10000)/20000 * height
+
+						x = int(round(x))
+						y = int(round(y))
+
+						cv2.line(img, (x, y), (x + int(1 * 5 * math.cos(math.radians(missile.angle))), y + int(1* 5 * math.sin(math.radians(missile.angle)))), (0, 255, 0), 2)
 
 
 					v.write(img)

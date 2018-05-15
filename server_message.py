@@ -30,5 +30,6 @@ class ServerMessage:
 	
 class Enemy:
 	def __init__(self, identity, x, y):
+		self.identity = identity
 		self.x = x
 		self.y = y

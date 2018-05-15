@@ -109,8 +109,10 @@ class Client:
 					resp.add_turn(-45)
 
 				d2 = game_data.distance_between_point_and_line(serv_mess.x, serv_mess.y, x_next, y_next, xenem, yenem)
-				if (serv_mess.can_shoot) & (dist < 1200) & (d2 < 10):
-					resp.add_shoot()
+				if (serv_mess.can_shoot_missile) & (dist < 1200) & (d2 < 10):
+					resp.lock_on(serv_mess.enemies_in_sight[0])
+					resp.add_fire_missile()
+					#print('Should have shot!')
 				
 
 

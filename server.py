@@ -97,6 +97,8 @@ class Server:
 			if p.alive:
 				if p.fire_iteration_count == 0:
 					temp_message.add_can_shoot()
+				if p.missile_iteration_count == 0:
+					temp_message.add_can_fire_missile()
 				temp_message.add_location(self.gamedata.players[self.connections.index(c)].x, self.gamedata.players[self.connections.index(c)].y)
 				temp_message.add_angle(self.gamedata.players[self.connections.index(c)].angle)
 				for c2 in self.connections:
@@ -127,20 +129,23 @@ class Server:
 		self.gamehistory.add_game_data_instance(copy.deepcopy(self.gamedata))
 
 		for i in inputs:
-			self.gamedata.players[i.id].turn(float(i.turn), self.dt)
+			p = self.gamedata.players[i.id]
+			p.turn(float(i.turn), self.dt)
 			if i.accelerate:
-				self.gamedata.players[i.id].accelerate( self.dt)
+				p.accelerate( self.dt)
 			if i.decelerate:
-				self.gamedata.players[i.id].decelerate( self.dt)
+				p.decelerate( self.dt)
 			if i.shoot_gun:
-				p = self.gamedata.players[i.id]
 				if p.bullet_ammo > 0 & p.fire_iteration_count == 0:
 					self.gamedata.bullets.append(game_data.Bullet(i.id, p.x, p.y, p.angle))
 					p.bullet_ammo = p.bullet_ammo - 1
 					p.fire_iteration_count = 1
-				del p
 			if i.shoot_missile:
-				pass
+				if p.missiles > 0 & p.missile_iteration_count == 0:
+					self.gamedata.missiles.append(game_data.Missile(i.id, p.x, p.y, p.angle, i.lock))
+					#NEED TO CONVERT LOCK TO ENEMY
+					p.missiles = p.missiles - 1
+					p.missile_iteration_count = 1
 
 
 			#self.gamedata.players[i.id].move(self.dt)
@@ -151,6 +156,11 @@ class Server:
 					p.fire_iteration_count = 0
 				elif p.fire_iteration_count > 0:
 					p.fire_iteration_count = p.fire_iteration_count + 1
+
+				if p.missile_iteration_count >= self.iterations_per_second/p.missile_fire_rate + 1:
+					p.missile_iteration_count = 0
+				elif p.missile_iteration_count > 0:
+					p.missile_iteration_count = p.missile_iteration_count + 1
 			#print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
 
 		for b in self.gamedata.bullets:
@@ -174,10 +184,12 @@ class Server:
 				for b in self.gamedata.bullets:
 					if game_data.check_hit(b,p):
 						p.health = p.health - b.damage
+						self.gamedata.bullets.remove(b)
 
 				for m in self.gamedata.missiles:
 					if game_data.check_hit(m,p):
 						p.health = p.health - m.damage
+						self.gamedata.missiles.remove(m)
 
 		for p in self.gamedata.players:
 			if p.alive:

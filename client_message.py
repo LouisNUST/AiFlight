@@ -9,6 +9,7 @@ class ClientMessage:
 		self.shoot_missile = False
 		self.turn = 0
 		self.radio_message = ''
+		self.lock = None
 
 	def add_turn(self, rate):
 		self.turn = rate
@@ -25,5 +26,8 @@ class ClientMessage:
 	def add_shoot(self):
 		self.shoot_gun = True
 
-	def add_fire_missle(self):
-		self.shoot_missle = True
+	def add_fire_missile(self):
+		self.shoot_missile = True
+
+	def lock_on(self, enemy_id):
+		self.lock = enemy_id
