@@ -69,9 +69,15 @@ class Server:
 			socket_utilities.send_data(c,'START'.encode())
 
 		for i in range(0,n_iterations):
+			if self.gamedata.game_over:
+				break;
 			self.broadcast_game_data()
 			given = self.receive_client_inputs()
 			self.process_game_data(given)
+
+		if (not self.gamedata.game_over):
+			self.gamedata.game_over = True
+			print("The game ended in a draw!")
 
 		#Saves last bit of data
 		if not self.gamehistory.is_empty():
@@ -92,7 +98,7 @@ class Server:
 		#print('broadcasting game data...')
 		for c in self.connections:
 			temp_message = server_message.ServerMessage()
-			#CUSSTOMIZE WHAT TO SEND TO CLIENTS
+			#CUSTOMIZE WHAT TO SEND TO CLIENTS
 			p = self.gamedata.players[self.connections.index(c)]
 			if p.alive:
 				if p.fire_iteration_count == 0:
@@ -102,10 +108,8 @@ class Server:
 				temp_message.add_location(self.gamedata.players[self.connections.index(c)].x, self.gamedata.players[self.connections.index(c)].y)
 				temp_message.add_angle(self.gamedata.players[self.connections.index(c)].angle)
 				for c2 in self.connections:
-					if c != c2:
+					if c != c2 and self.gamedata.players[self.connections.index(c2)].alive:
 						temp_message.add_enemy(str(self.connections.index(c2)) , self.gamedata.players[self.connections.index(c2)].x, self.gamedata.players[self.connections.index(c2)].y)
-
-
 
 
 			temp_message = socket_utilities.convert_to_bytes(temp_message)
@@ -126,7 +130,6 @@ class Server:
 
 #------------------------------------------------------------------------------------------------------------------------- GAME LOGIC HERE
 	def process_game_data(self, inputs):
-		self.gamehistory.add_game_data_instance(copy.deepcopy(self.gamedata))
 
 		for i in inputs:
 			p = self.gamedata.players[i.id]
@@ -196,7 +199,27 @@ class Server:
 				if p.health <= 0:
 					p.alive = False
 
+		# CHECK WIN CONDITIONS ----------------------------------------
+		alive_counts = 0
+		last_alive = -1
+		for i in range(0, len(self.gamedata.players)):
+			if (self.gamedata.players[i].alive):
+				alive_counts += 1
+				last_alive = i 
 
+		if (alive_counts == 1):
+			print("Player " + str(last_alive) +" won the game!")
+			self.gamedata.game_over = True
+			self.gamedata.game_winner = last_alive
+		elif(alive_counts == 0):
+			print("The game ended in a draw!")
+			self.gamedata.game_over = True
+
+		# END CHECK WIN CONDITIONS -------------------------------------
+
+		# SAVE GAME STATE ----------------------------------------------
+		self.gamehistory.add_game_data_instance(copy.deepcopy(self.gamedata))
+		# END SAVE GAME STATE ------------------------------------------
 
 
 		#print('angle: ' + str(self.gamedata.players[0].angle) + ' x: ' + str(self.gamedata.players[0].x) + ' y: ' + str(self.gamedata.players[0].y))
@@ -223,13 +246,25 @@ def main():
 	num_i = input('Enter number of iterations: ')
 	game_name = input('Enter a name for this simulation: ')
 
+
 	print('Starting server at ' + str(hostname) + ':' + str(p) + '...')
 
 	#ts = TestServer('localhost',5555,2,10)
 	ts = Server(hostname, int(p), int(num_c), int(num_i), str(game_name))
-	print("Rendering...")
-	ts.gamehistory.playback_overview(ts.gamehistory.file_stem, 1024, 1024, 25, ts.iterations_per_second)
-	#ts.gamehistory.playback_from(ts.gamehistory.file_stem, 0, 600, 600)
+
+	render_option = input('A - None\nB - Render from Player\nEnter Here:')
+
+
+	if (render_option == 'B' or render_option == 'b'):
+		player_to_follow = int(input('Which player would you like to follow? '))
+		meters_per_pixel = int(input("How many meters per pixel should be rendered? "))
+		print("Rendering...")
+		ts.gamehistory.playback_from_scaled(ts.gamehistory.file_stem, player_to_follow, 600, 600, 25, ts.iterations_per_second, meters_per_pixel)
+	else:
+		return
+
+	#ts.gamehistory.playback_overview(ts.gamehistory.file_stem, 1024, 1024, 25, ts.iterations_per_second)
+	#ts.gamehistory.playback_from_scaled(ts.gamehistory.file_stem, 0, 600, 600, 25, ts.iterations_per_second, 5)
 
 if __name__ == '__main__':
 	main()

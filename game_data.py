@@ -14,6 +14,9 @@ class GameData:
 		self.missiles = []
 		self.bullets = []
 
+		self.game_over = False
+		self.game_winner = -1
+
 
 	#Define methods for working with game variables
 class Player:
@@ -144,7 +147,7 @@ class Lock:
 
 
 def check_hit(missile_or_bullet, player):
-	if (calculate_distance_entities(missile_or_bullet,player) < player.collision_radius) & (missile_or_bullet.owner != player.identity):
+	if (calculate_distance_entities(missile_or_bullet,player) < player.collision_radius) and (str(missile_or_bullet.owner) != (str(player.identity))):
 		return True
 	else:
 		return False
